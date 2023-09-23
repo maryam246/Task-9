@@ -1,94 +1,55 @@
-import json
 import bardapi
+import os
 
-class Note:
-    def __init__(self, question, answer):
-        self.question = question
-        self.answer = answer
+def save_question_and_answer(question, answer, feedback):
+  """Saves the question, answer, and feedback to a file."""
 
-class BardAssistant:
-    def __init__(self, token):
-        self.bard = bardapi.Bard(token=token)
-        self.notes = []
+  # Get the path to the PyCharm project directory.
+  project_directory = os.path.dirname(os.path.abspath(__file__))
 
-    def get_answer(self, question, length):
-        answer = self.bard.get_answer(question)
+  # Create the filename for the questions and answers file.
+  filename = os.path.join(project_directory, 'questions_and_answers.txt')
 
-        if answer is None:
-            answer = "I don't know the answer to that question."
+  # Open the file in append mode.
+  with open(filename, 'a') as f:
+    # Write the question, answer, and feedback to the file.
+    f.write(f'{question}\n{answer}\n{feedback}\n')
 
-        if length == "short":
-            answer = answer[:100]
-        elif length == "medium":
-            answer = answer[:200]
-        elif length == "long":
-            answer = answer
-        else:
-            raise ValueError("Invalid length")
+bard = bardapi.Bard(token='bQhliBCrsGd3ATAuACHNiH5Tc2fOqDRHxHJAyHIqj8aysIHhp63Jndd1GDCnOSiXGZjYsg.')
 
-        return answer
+while True:
+  print("Welcome Ask anything!")
+  # Ask the user for the desired answer size.
+  answer_size = int(input('Enter the desired answer size: '))
 
-    def save_note(self, question, answer):
-        note = Note(question, answer)
-        self.notes.append(note)
+  # Get the user's question.
+  q = input('ask question:')
 
-    def load_notes(self):
-        with open("notes.py", "r") as file:
-            notes = json.load(file)
-            self.notes = notes
+  if q:
+    # Get the answer from Bard.
+    r = bard.get_answer(q)
 
-    def save_notes_to_file(self):
-        with open("notes.py", "w") as file:
-            json.dump(self.notes, file)
+    # If the answer is longer than the desired answer size, truncate it.
+    if len(r) > answer_size:
+      r = r[:answer_size]
 
-def get_api_token_from_file():
-    with open("api_token.txt", "r") as file:
-        api_token = file.read()
+    # Print the answer to the console.
+    print(r)
 
-    return api_token
+    # Get the user's feedback on the answer.
+    feedback = input('Feedback on answer: ')
 
-def main():
-    # Get the API token from a file.
-    api_token = get_api_token_from_file()
+    # Save the question, answer, and feedback to a file.
+    save_question_and_answer(q, r, feedback)
 
-    # Create a Bard assistant object.
-    assistant = BardAssistant(token='bQhliM21tBxFJCItTNzf2TunvIuG4wfVOcjb-JNTzLWnAOSCvOJd3xZJ-hxTGsoqki0o0g.')
+    # Ask the user if they want to exit.
+    exit_confirmation = input('Do you want to exit? (y/n): ')
 
-    # Print a welcome message.
-    print("Welcome to the Bard note-taking app!")
+    # If the user enters "y" or "Y", exit the loop.
+    if exit_confirmation.lower() == 'y':
+      print("Good by!")
+      break
 
-    while True:
-        # Ask the user if they want to ask a question.
-        ask_question = input("Do you want to ask a question? (y/n): ")
-
-        # If the user does not want to ask a question, exit the program.
-        if ask_question != "y":
-            break
-
-        # Ask the user a question.
-        question = input("Ask a question: ")
-
-        # Ask the user for the length of the answer.
-        length = input("What length of answer do you want? (short, medium, or long): ")
-
-        # Get the answer from the assistant.
-        answer = assistant.get_answer(question, length)
-
-        # Print the answer to the user.
-        print(answer)
-
-        # Save the question and answer to a note.
-        assistant.save_note(question, answer)
-
-        # Ask the user if they want to save the question and answer.
-        save_question_and_answer = input("Do you want to save the question and answer? (y/n): ")
-
-        # If the user wants to save the question and answer, save it to the file.
-        if save_question_and_answer == "y":
-            assistant.save_notes_to_file()
-
-    # Print a goodbye message.
-    print("Good bye!")
-
-if __name__ == "__main__":
-    main()
+  else:
+    # If the user enters an empty string, break out of the loop.
+    break
